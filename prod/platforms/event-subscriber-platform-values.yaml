@@ -1,0 +1,136 @@
+replicaCount: 6
+
+hpa:
+  minReplicas: 6
+  maxReplicas: 7
+  cpu: 160
+  memory: 160
+
+image:
+  repository: nexuscoe.rjil.ril.com:5115/jioent/health/event-subscriber-platform #nginx
+  tag: prod-latest #stable
+  pullPolicy: Always #IfNotPresent
+  customTCPPort: 5000
+  env:
+    - name: EVENT_BROKER_SERVERS
+      # value: guru-kafka-6-cp-kafka-headless.guru-queues-6.svc.cluster.local:9092 #localhost:9092
+      value: 10.161.38.16:6667,10.161.38.17:6667,10.161.38.18:6667
+    - name: EVENT_TOPIC_NAME
+      value: event-topic
+    - name: EVENT_BROKER_KAFKA_PARTITIONS
+      value: "15"
+    - name: EVENT_BROKER_KAFKA_REPLICATION_FACTOR
+      value: "3"
+    - name: EVENT_BROKER_GROUP_ID
+      value: "subscriber_group_id"
+    - name: EVENT_TOPIC_CLEANUP_POLICY
+      value: delete
+    - name: EVENT_TOPIC_RETENTION_MS
+      value: "3600000" # 1 hour
+    - name: MONGO_CONNECTION_STRING
+      # value: "mongodb://root:secret_prod_pwd@104.211.88.67:27017,13.71.29.19:27017,52.172.206.179:27017/guru_electronic_records?authSource=admin&replicaSet=aigururs"
+      valueFrom:
+        secretKeyRef:
+          name: event-subscriber-platform-secret
+          key: MONGO_CONNECTION_STRING
+    - name: JHH_UPLOAD_RECORD_URL
+      value: "https://qa3files.healthhub.net.in/HealthHubWebServices/uploadMedicalRecord"
+    - name: JHH_AUTH_ID
+      value: "aicoe"
+    - name: JHH_AUTH_TOKEN
+      value: "Nm97HzREx9FTUB8hzzUnYg"
+    - name: USER_PLATFORM_HOST
+      value: "http://user-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local"
+    - name: PG_CONNECTION_STRING
+      value: "postgres://ai_guru_user@ai-guru-pg:immigrant_song1234@ai-guru-pg.postgres.database.azure.com:5432/guru_events?sslmode=require"
+    - name: SQL_CONNECTION_STRING
+      # value: "mssql+pyodbc://ai-guru-sql-admin@ai-guru-sql:immigrant_song1234@ai-guru-sql.database.windows.net:1433/guru-events?driver=ODBC+Driver+17+for+SQL+Server"
+      valueFrom:
+        secretKeyRef:
+          name: event-subscriber-platform-secret
+          key: SQL_CONNECTION_STRING
+    - name: SQL_EVENT_STORE_NAME
+      value: "event_store"
+    - name: SQL_SURVEY_STORE_NAME
+      value: "survey_store"
+    - name: SQL_RAW_EVENT_STORE_NAME
+      value: "raw_event_store"
+    - name: LOGGING_LEVEL
+      value: WARN
+    - name: CORE_PLATFORM_BASE_URL
+      value: "http://core-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local"
+    - name: UAAS_PUBLISHER_BASEURL
+      value: "http://uaas-event-publisher-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local"
+    - name: FAMILY_PROFILE_URL
+      value: "http://apim.prod.health.jio.com/jhh-familyservice/v1/getusernumber/"
+    - name: FAMILY_PROFILE_AUTH_TOKEN
+      value: "pYQKYanXehx4waFP2bGydC9RwC7TBdg"
+    - name: FAMILY_PROFILE_AUTH_ID
+      value: "jiohhproduction"
+    - name: FAMILY_PROFILE_OCP_APIM_SUBSCRIPTION_KEY
+      value: "444da0cf60df4c49b11b4ff5d3dfbe50"
+
+imagePullSecrets: #[]
+  - name: nexus-container-repo
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# dockerImageCredentials:
+#   registry: guruartifacts.azurecr.io
+#   username: guruartifacts
+#   password: zo8sAObBAq/Q9iEMa+TAR42=Ly8yYytp

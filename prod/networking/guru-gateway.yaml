@@ -1,0 +1,193 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: guru-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: guru-virtual-service
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - guru-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /content-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: content-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /disease-risk-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: disease-risk-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /image-classifier-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: image-classifier-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /information-extractor-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: information-extractor-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /rf-covid-lh-interface-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: rf-covid-lh-interface-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /core-platform/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: core-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /event-publisher-platform/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: event-publisher-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /user-platform/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: user-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  # - match:
+  #   - uri:
+  #       prefix: /metabase-ui/
+  #   rewrite:
+  #     uri: /
+  #   route:
+  #   - destination:
+  #       host: metabase-ui-guruchart.jio-bhaaratai-covid.svc.cluster.local
+  #       # subset: v1
+  #       port:
+  #         number: 80
+
+  - match:
+    - uri:
+        prefix: /weather-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: weather-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+
+  - match:
+    - uri:
+        prefix: /content-service/
+    rewrite:
+      uri: /
+    route:
+      - destination:
+          host: content-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+          # subset: v1
+          port:
+            number: 80
+  - match:
+    - uri:
+        prefix: /hms-integration-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: hms-integration-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /jhh-partner-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: jhh-partner-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+      - uri:
+          prefix: /covid-pass-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: covid-pass-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80
+  - match:
+      - uri:
+          prefix: /jhh-whatsapp-integration-service/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: jhh-whatsapp-integration-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+        # subset: v1
+        port:
+          number: 80            
+

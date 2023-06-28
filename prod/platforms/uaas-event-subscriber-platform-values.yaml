@@ -1,0 +1,178 @@
+replicaCount: 5
+
+hpa:
+  minReplicas: 5
+  maxReplicas: 7
+  cpu: 160
+  memory: 160
+
+image:
+  repository: nexuscoe.rjil.ril.com:5115/jioent/health/base-event-subscriber-platform #nginx
+  tag: prod-latest #stable
+  pullPolicy: Always #IfNotPresent
+  customTCPPort: 5000
+  env:
+    - name: RUN_ENV
+      value: PROD
+    - name: LOGGING_LEVEL
+      value: WARN
+    - name: DITTO_SERVICE_BASE_URL
+      value: http://ditto-service-guruchart.jio-bhaaratai-covid.svc.cluster.local
+    - name: SUBSCRIBER_CONFIG_FILE
+      value: "configs/uaas_subscriber_config.json"
+    - name: DITTO_HASH_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ditto-platform-secret
+          key: EVENT_SUBSCRIBER_PLATFORM_KEY
+
+imagePullSecrets: #[]
+  - name: nexus-container-repo
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP #LoadBalancer #ClusterIP
+  port: 80
+  targetPort: 5000
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# dockerImageCredentials:
+#   registry: guruartifacts.azurecr.io
+#   username: guruartifacts
+#   password: zo8sAObBAq/Q9iEMa+TAR42=Ly8yYytp
+
+app:
+  envVars:
+    LOG_LEVEL: info
+    # TMPFS_LOCATION: /tmp/app-server
+    # CASE_LAKE_HOST: localhost
+    # CASE_LAKE_PORT: 8080
+    # CASE_LAKE_CONFIG_FILE: configs/case_lake_config.json
+
+  configFiles:
+    - fileName: uaas_subscriber_config.json
+      data: |-
+        {
+            "logger_name": "uaas_event_subscriber_platform_logger",
+            "crankers": [
+              {
+                "function": "fetch_and_store_option_to_entity_mappings",
+                "arghs": {
+                  "core_platform_baseurl": "http://core-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local",
+                  "list_entities_endpoint": "/knowlake/healthcare/healthcare.models.entities.adaptor.QuestionnaireToHealthcareEntityMapping/list_entities/",
+                  "filepath": "src/data/option_to_guru_entity_mappings.json"
+                }
+              }
+            ],
+            "event_queue_config": {
+                "admin": {},
+                "subscriber": {
+                    "queue_type": "KAFKA",
+                    "topic": "uaas-topic",
+                    "consumer": {
+                        "kafka": {
+                            "bootstrap_servers": [
+                              "10.161.38.16:6667",
+                              "10.161.38.17:6667",
+                              "10.161.38.18:6667"
+                            ],
+                            "group_id": "uaas_topic_consumer_group_id",
+                            "enable_auto_commit": true,
+                            "auto_commit_interval_ms": 1000
+                        }
+                    }
+                }
+            },
+            "event_transformers": {
+              "user_survey_event": [
+                {
+                  "function": "print_event_on_stdout"
+                },
+                {
+                  "function": "fetch_jhh_id_for_emp_xp_user",
+                  "arghs": {
+                      "corporate_service_baseurl": "http://corporate-service-guruchart.jio-bhaaratai-covid.svc.cluster.local",
+                      "fetch_jhh_id_endpoint": "/get_jhh_user_details/ "
+                  }
+                },
+                {
+                  "function": "convert_options_to_entities",
+                  "arghs": {
+                      "filepath": "src/data/option_to_guru_entity_mappings.json"
+                  }
+                },
+                {
+                  "function": "convert_survey_event_to_ditto_schema",
+                  "arghs": {
+                      "covid_symptom_checker_diagnostic_parameter_id": "5f4f1194ba01b3f4772eaa94"
+                  }
+                }
+              ]
+            },
+            "event_loaders": {
+              "user_survey_event": [
+                {
+                  "function": "send_to_ditto_service",
+                  "arghs": {
+                      "api_type": "POST",
+                      "api_endpoint": "http://ditto-platform-guruchart.jio-bhaaratai-covid.svc.cluster.local",
+                      "UUAS_EVENT_SUBSCRIBER_PLATFORM_CLIENT_ID": "UAAS_EVENT_SUBSCRIBER_PLATFORM"
+                  }
+                },
+                {
+                  "function": "send_to_ehr"
+                }
+              ]
+            }
+        }
+  configFilesMountPath: /usr/src/app/src/configs

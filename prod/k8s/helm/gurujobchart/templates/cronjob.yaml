@@ -1,0 +1,31 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "gurujobchart.fullname" . }}
+  labels:
+{{ include "gurujobchart.labels" . | indent 4 }}
+spec:
+  schedule: {{ .Values.app.schedule }}
+  successfulJobsHistoryLimit: {{ .Values.app.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.app.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+        {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+        {{- end }}
+          restartPolicy: OnFailure
+          containers:
+          - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            name: {{ .Chart.Name }}
+            {{ if ne .Values.image.command "" }}
+            command: [{{ .Values.image.command }}]
+            {{ end }}
+            args:
+              {{- range $arg := .Values.image.args }}
+              - {{ $arg }}
+              {{- end }}
+            env:
+              {{- toYaml .Values.image.env | nindent 14 }}

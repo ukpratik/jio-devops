@@ -1,0 +1,57 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+imagePullSecrets:
+  - name: nexus-container-repo
+
+image:
+  repository: nexuscoe.rjil.ril.com:5115/jioent/health/jhh-partner-service
+  tag: prod-latest
+  command: "python3"
+  args: ["ril_sync_scheduler.py"]
+  pullPolicy: Always
+  env:
+    - name: RIL_SYNC_ASSOCIATE_URI
+      value: http://jhh-partner-service-guruchart.jio-bhaaratai-covid.svc.cluster.local/sql_sync/ril/associate_jhh_partner_user
+    - name: RIL_SYNC_DISASSOCIATE_URI
+      value: http://jhh-partner-service-guruchart.jio-bhaaratai-covid.svc.cluster.local/sql_sync/ril/disassociate_jhh_partner_user
+    - name: TIME_SPAN_IN_DAYS
+      value: "90"
+
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+app:
+  name: ril-jhh-partner-sync-job
+  schedule: "0 12 * * SUN"
+  concurrencyPolicy: Allow
+  restartPolicy: OnFailure
+  failedJobsHistoryLimit: 7
+  successfulJobsHistoryLimit: 7
